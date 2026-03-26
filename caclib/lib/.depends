@@ -1,0 +1,78 @@
+# DO NOT DELETE
+
+cacstr.o: /usr/include/stdio.h /usr/include/string.h /usr/include/ctype.h
+cacstr.o: /usr/include/features.h /usr/include/features-time64.h
+cacstr.o: /usr/include/stdc-predef.h /usr/include/stdlib.h
+cacstr.o: /usr/include/alloca.h /usr/include/math.h /usr/include/time.h
+cacstr.o: /usr/include/unistd.h ../include/sdd.h ../include/header.h
+cacstr.o: ../include/caclib_sex.h caclib_proto.h ../include/caclib_sock.h
+cacstr.o: /usr/include/netinet/in.h /usr/include/endian.h
+cacstr.o: /usr/include/netdb.h /usr/include/rpc/netdb.h
+deg_trig.o: /usr/include/math.h
+socklib.o: /usr/include/stdio.h /usr/include/stdlib.h /usr/include/alloca.h
+socklib.o: /usr/include/features.h /usr/include/features-time64.h
+socklib.o: /usr/include/stdc-predef.h /usr/include/netinet/in.h
+socklib.o: /usr/include/endian.h /usr/include/netdb.h
+socklib.o: /usr/include/rpc/netdb.h /usr/include/unistd.h
+socklib.o: /usr/include/fcntl.h /usr/include/errno.h /usr/include/string.h
+socklib.o: /usr/include/ctype.h /usr/include/signal.h
+socklib.o: ../include/caclib_mbdef.h ../include/caclib_sock.h caclib_proto.h
+mbdef.o: /usr/include/stdlib.h /usr/include/alloca.h /usr/include/features.h
+mbdef.o: /usr/include/features-time64.h /usr/include/stdc-predef.h
+mbdef.o: /usr/include/stdio.h /usr/include/strings.h /usr/include/string.h
+mbdef.o: /usr/include/netdb.h /usr/include/netinet/in.h /usr/include/endian.h
+mbdef.o: /usr/include/rpc/netdb.h /usr/include/errno.h ../include/sdd.h
+mbdef.o: ../include/header.h ../include/caclib_mbdef.h caclib_proto.h
+mbdef.o: ../include/caclib_sock.h
+socknoxvlib.o: /usr/include/stdio.h /usr/include/netinet/in.h
+socknoxvlib.o: /usr/include/features.h /usr/include/features-time64.h
+socknoxvlib.o: /usr/include/stdc-predef.h /usr/include/endian.h
+socknoxvlib.o: /usr/include/netdb.h /usr/include/rpc/netdb.h
+socknoxvlib.o: /usr/include/unistd.h /usr/include/fcntl.h
+socknoxvlib.o: /usr/include/errno.h /usr/include/string.h
+socknoxvlib.o: /usr/include/ctype.h /usr/include/signal.h
+socknoxvlib.o: ../include/caclib_mbdef.h ../include/caclib_sock.h
+socknoxvlib.o: caclib_proto.h
+timeLib.o: /usr/include/stdio.h /usr/include/stdlib.h /usr/include/alloca.h
+timeLib.o: /usr/include/features.h /usr/include/features-time64.h
+timeLib.o: /usr/include/stdc-predef.h /usr/include/string.h
+timeLib.o: /usr/include/time.h /usr/include/math.h /usr/include/unistd.h
+timeLib.o: /usr/include/fcntl.h /usr/include/ctype.h ../include/caclib_sex.h
+timeLib.o: caclib_proto.h ../include/caclib_sock.h /usr/include/netinet/in.h
+timeLib.o: /usr/include/endian.h /usr/include/netdb.h
+timeLib.o: /usr/include/rpc/netdb.h
+loglib.o: /usr/include/stdio.h /usr/include/stdlib.h /usr/include/alloca.h
+loglib.o: /usr/include/features.h /usr/include/features-time64.h
+loglib.o: /usr/include/stdc-predef.h /usr/include/string.h
+loglib.o: /usr/include/errno.h /usr/include/ctype.h /usr/include/time.h
+loglib.o: /usr/include/math.h ../include/caclib_loglib.h caclib_proto.h
+loglib.o: ../include/caclib_sock.h /usr/include/netinet/in.h
+loglib.o: /usr/include/endian.h /usr/include/netdb.h /usr/include/rpc/netdb.h
+sem.o: /usr/include/stdlib.h /usr/include/alloca.h /usr/include/features.h
+sem.o: /usr/include/features-time64.h /usr/include/stdc-predef.h
+sem.o: /usr/include/stdio.h /usr/include/string.h /usr/include/math.h
+sem.o: /usr/include/errno.h /usr/include/unistd.h /usr/include/fcntl.h
+sem.o: /usr/include/time.h ../include/caclib_sem.h caclib_proto.h
+sem.o: ../include/caclib_sock.h /usr/include/netinet/in.h
+sem.o: /usr/include/endian.h /usr/include/netdb.h /usr/include/rpc/netdb.h
+swapdata.o: /usr/include/math.h caclib_proto.h ../include/caclib_sock.h
+swapdata.o: /usr/include/netinet/in.h /usr/include/features.h
+swapdata.o: /usr/include/features-time64.h /usr/include/stdc-predef.h
+swapdata.o: /usr/include/endian.h /usr/include/netdb.h
+swapdata.o: /usr/include/rpc/netdb.h
+findversion.o: /usr/include/stdlib.h /usr/include/alloca.h
+findversion.o: /usr/include/features.h /usr/include/features-time64.h
+findversion.o: /usr/include/stdc-predef.h /usr/include/stdio.h
+findversion.o: /usr/include/string.h
+wr_sdd.o: /usr/include/stdio.h /usr/include/stdlib.h /usr/include/alloca.h
+wr_sdd.o: /usr/include/features.h /usr/include/features-time64.h
+wr_sdd.o: /usr/include/stdc-predef.h /usr/include/string.h
+wr_sdd.o: /usr/include/unistd.h /usr/include/fcntl.h /usr/include/time.h
+wr_sdd.o: /usr/include/math.h ../include/sdd.h ../include/header.h
+wr_sdd.o: caclib_proto.h ../include/caclib_sock.h /usr/include/netinet/in.h
+wr_sdd.o: /usr/include/endian.h /usr/include/netdb.h /usr/include/rpc/netdb.h
+sock.o: /usr/include/stdlib.h /usr/include/alloca.h /usr/include/features.h
+sock.o: /usr/include/features-time64.h /usr/include/stdc-predef.h
+sock.o: /usr/include/stdio.h /usr/include/string.h caclib_proto.h
+sock.o: ../include/caclib_sock.h /usr/include/netinet/in.h
+sock.o: /usr/include/endian.h /usr/include/netdb.h /usr/include/rpc/netdb.h
