@@ -49,8 +49,9 @@
 
 // Socket Globals
 // UDP
-int udpsock, slen;		// UDP socket to receive IBOB DATA
+int udpsock;		// UDP socket to receive IBOB DATA
 struct sockaddr_in si_me, si_other;
+socklen_t slen = sizeof(si_other);
 
 // TCP
 int tcpsock;			// TCP socket to communicate to IBOB
@@ -152,7 +153,7 @@ void do_initialize()
         si_me.sin_family = AF_INET;
         si_me.sin_port = htons(PORT);
         si_me.sin_addr.s_addr = htonl(INADDR_ANY);
-        if (bind(udpsock, &si_me, sizeof(si_me))==-1)
+        if (bind(udpsock, (const struct sockaddr *)&si_me, sizeof(si_me))==-1)
                 diep("bind");
 
 
@@ -297,11 +298,10 @@ void send_data()
   unsigned short load;    //16
 
   unsigned char ch[BUFLEN];
-  unsigned int msb[1024]; //32 bits
-  unsigned int lsb[1024]; //32 bits
+  uint64_t msb[1024]; //32 bits
+  uint64_t lsb[1024]; //32 bits
 
   unsigned char buf[BUFLEN];
-  char fname[64];
 
   for(i=0;i<1024;i++){
     lsb[i]=0;
@@ -312,7 +312,7 @@ void send_data()
   clear_udp_buffer(udpsock);
 
   while(1){
-    recvfrom(udpsock, buf, BUFLEN, 0, &si_other, &slen);
+    recvfrom(udpsock, buf, BUFLEN, 0, (struct sockaddr *)&si_other, &slen);
     memcpy(&bram,  buf+2, sizeof(int8_t));
     memcpy(&offset,buf+4, sizeof(int16_t));
     offset=bswap_16(offset);
@@ -323,7 +323,7 @@ void send_data()
 
   for(packet=0;packet<(8*integration);packet++){
 
-    recvfrom(udpsock, buf, BUFLEN, 0, &si_other, &slen);
+    recvfrom(udpsock, buf, BUFLEN, 0, (struct sockaddr *)&si_other, &slen);
 
     memcpy(&label, buf+0, sizeof(uint8_t));
     memcpy(&bram,  buf+2, sizeof(uint8_t));
@@ -372,8 +372,6 @@ void send_data()
 int main(int argc, char **argv)
 {
   int n, sel;   // sockets
-  time_t t = time(NULL); // time for the timestamp in filename
-  struct tm tm = *localtime(&t);
 
   setCactusEnvironment();               // get to all the telescope environment variables
 

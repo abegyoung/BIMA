@@ -11,3 +11,6 @@ server: $(OBJS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+clean :
+	rm -f ibob_control.o ibob_control
