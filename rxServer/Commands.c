@@ -81,6 +81,42 @@ int sendCan(int argc, char **argv, int fdout, int fderr)
   return 0;
 }
 
+int doCal(int argc, char **argv, int fdout, int fderr)
+{
+  int state = (int)strtod(argv[2], NULL);
+
+  int device = 2; //GPIB DEVICE
+  char cmd_buffer[24];
+  char reply[BUF_SIZE];
+
+  // SWITCH GPIB DEVICE 
+  // SET GPIB ADDRESS OF USB DEVICE
+  snprintf(cmd_buffer, sizeof(cmd_buffer), "++addr 8\n");
+  tellSerial(device, cmd_buffer, reply);
+  // SET AUTO READ FROM USB DEVICE
+  snprintf(cmd_buffer, sizeof(cmd_buffer), "++auto 1\n");
+  tellSerial(device, cmd_buffer, reply);
+  // SET CR+LF USB DEVICE LINE ENDING
+  snprintf(cmd_buffer, sizeof(cmd_buffer), "++eos 0\n");
+  tellSerial(device, cmd_buffer, reply);
+
+  /* DEBUG
+  // READ Identification Query
+  snprintf(cmd_buffer, sizeof(cmd_buffer), "*IDN?\n");
+  printf("%s", cmd_buffer);
+  tellSerial(device, cmd_buffer, reply);
+  tellUser(fdout, "GPIB talker to %s", reply);
+  */
+
+  // SEND STATE to CAL pin
+  snprintf(cmd_buffer, sizeof(cmd_buffer), "OUTP %d\n", state);
+  tellSerial(device, cmd_buffer, reply);
+
+  return 0;
+
+}
+
+
 // Sets Lband synth frequency directly 
 // Also sets the YIG Tune voltage for X-band lock based on required nth harmonic
 // 
@@ -104,28 +140,22 @@ int setLband(int argc, char **argv, int fdout, int fderr)
   const char *prefix = "FR ";
   char reply[BUF_SIZE];
 
-  /*
   // SET GPIB ADDRESS OF USB DEVICE
   snprintf(cmd_buffer, sizeof(cmd_buffer), "++addr 7\n");
-  char *gpib_cmd = cmd_buffer;
-  tellSerial(device, gpib_cmd, reply);
+  tellSerial(device, cmd_buffer, reply);
 
   // SET NO AUTO READ FROM USB DEVICE
   snprintf(cmd_buffer, sizeof(cmd_buffer), "++auto 0\n");
-  *gpib_cmd = cmd_buffer;
-  tellSerial(device, gpib_cmd, reply);
+  tellSerial(device, cmd_buffer, reply);
 
   // SET CR+LF USB DEVICE LINE ENDING
   snprintf(cmd_buffer, sizeof(cmd_buffer), "++eos 3\n");
-  *gpib_cmd = cmd_buffer;
-  tellSerial(device, gpib_cmd, reply);
-  */
+  tellSerial(device, cmd_buffer, reply);
 
   // SEND FR 1200.000000 MZ to synth
   snprintf(cmd_buffer, sizeof(cmd_buffer), "%s%.6f MZ\n", prefix, f_synth);
-  char *gpib_cmd = cmd_buffer;
-  tellSerial(device, gpib_cmd, reply);
-  printf("%s", gpib_cmd);
+  tellSerial(device, cmd_buffer, reply);
+  printf("%s", cmd_buffer);
 
   //Set harmonic number
   if (YIGHarmonicN==8){
@@ -235,10 +265,8 @@ int setFreq(int argc, char **argv, int fdout, int fderr)
     f_synth = ((((freq/3.)-50.)/m)+10.)/n;
 
   snprintf(cmd_buffer, sizeof(cmd_buffer), "%s%.6f MZ\n", prefix, f_synth);
-  char *gpib_cmd = cmd_buffer;
-
-  tellSerial(device, gpib_cmd, reply);
-  tellUser(fdout, gpib_cmd, reply);
+  tellSerial(device, cmd_buffer, reply);
+  tellUser(fdout, cmd_buffer, reply);
 
   // Compute YIG coarse tuning
   int dac = f_synth * slope + y_int;

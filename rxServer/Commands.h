@@ -17,6 +17,7 @@ extern int setFreq( int, char **, int, int );
 extern int doBump( int, char **, int, int );
 extern int sendCan( int, char **, int, int );
 extern int sendStatus ( int, char **, int, int );
+extern int doCal( int, char **, int, int );
 
 
 
@@ -171,6 +172,15 @@ struct cmd commands[] =
     0,
     {
       { "", 0, 0, {} }
+    },
+  },
+
+  {
+    "cal", &doCal,
+    "change CAL load output pin state",
+    1,
+    {
+      { "state", CMDARR_ARGF_REQ | CMDARR_ARGF_NUM | CMDARR_ARGF_RANGE, 2, {"0","1"} },
     },
   },
 

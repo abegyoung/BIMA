@@ -1,7 +1,7 @@
 # Makefile for stripped down socket server
 
 CC=gcc
-CFLAGS=-c -Wall -O2 -Wno-unused-result
+CFLAGS=-c -Wall -O2 -Wno-unused-result -Wno-unused-variable
 LIBFLAGS=
 
 OBJS = Commands.o \
