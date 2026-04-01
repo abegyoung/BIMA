@@ -1,0 +1,5 @@
+*.o
+*.a
+caclib/lib/sock
+rxServer/Server
+spectrometer/ibob_control

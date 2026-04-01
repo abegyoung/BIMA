@@ -3,7 +3,7 @@ import time
 import sys
 
 # config
-HOST = "192.168.0.34"
+HOST = "192.168.1.204"
 USERNAME = "root"
 PASSWORD = "baytech"
 
