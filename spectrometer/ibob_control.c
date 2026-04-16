@@ -409,7 +409,7 @@ int main(int argc, char **argv)
       {
 
 	if (!client){
-          client = sock_connect("CATCHER");
+          client = sock_connect("SPEC_ARO_CATCHER");
 	  printf("connected to CATCHER\n");
 	}
 
@@ -430,7 +430,7 @@ int main(int argc, char **argv)
           log_newlog();	// Rotate the log files
         }
         else
-        if(!strcmp(msgbuf,"init"))
+        if(!strcmp(msgbuf,"INIT"))
         {
           do_initialize();		// Initialize hardware and UDP stream
         }

@@ -4,13 +4,18 @@ CC=gcc
 CFLAGS=-I../caclib/lib -I../caclib/include -c -Wall -O2
 LDFLAGS=-L../caclib/lib -lcaclib
 
-OBJS = ibob_control.o
+TARGETS = ibob_control if_control
 
-server: $(OBJS)
-	$(CC) $(OBJS) -o ibob_control $(LDFLAGS)
+all: $(TARGETS)
+
+ibob_control: ibob_control.o
+	$(CC) $(OBJS) -o ibob_control ibob_control.o $(LDFLAGS)
+
+if_control: if_control.o
+	$(CC) $(OBJS) -o if_control if_control.o $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean :
-	rm -f ibob_control.o ibob_control
+	rm -f $(TARGETS) *.o
