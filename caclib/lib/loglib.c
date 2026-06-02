@@ -279,7 +279,7 @@ int log_perror( msg )
 char *msg;
 {
   FILE *out;
-  long tm;
+  time_t tm; // AGY changed from long
   char err[4096], *t;
   char timestr[256];
   int how;
@@ -517,11 +517,12 @@ int offset;
   static char timestr[256];
   struct timeval tvv,*tp;
   static struct tm *tmnow;
-  long sec, toff;
+  time_t sec, toff;	//AGY changed from long
 
   tp = &tvv;
   gettimeofday(tp,0);
-  tp->tv_usec += 500;						/* Add .0005 sec for rounding to millisec */
+  tp->tv_usec += 500;	/* Add .0005 sec for rounding to millisec */
+
   if (tp->tv_usec >= 1000000)
   {
     tp->tv_usec -= 1000000;

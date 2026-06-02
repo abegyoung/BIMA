@@ -59,6 +59,10 @@ int tcpsock;			// TCP socket to communicate to IBOB
 // mboxdef
 struct SOCK *client;		// MBOX socket to send data to CATCHER
 
+// STRUCT GLOBALS
+int MODE = 0; //0=sig, 1=hot, 2=sky
+int BIN  = 0; //0=sig, 1=ref
+
 void diep(char *s)
 {
         perror(s);
@@ -118,9 +122,9 @@ struct SPEC_CONFIG {
 };
 
 #define NPOINTS         1024	// FFT size
-#define N_USABLE_POINTS (6400)
+#define N_USABLE_POINTS 1024
 #define NPARTS          1
-#define WHICH_SPEC      0
+#define WHICH_SPEC      2
 
 #define MAX_SOCK 1 + sizeof(struct SPEC_DATA_SET)  /* Biggest sock msg */
 
@@ -133,7 +137,7 @@ struct SPEC_CONFIG cfg;		// local spectrometer config
 
 int do_config()
 {
-  //log_msg("DO_CONFIG Got config - Starting configuration of IBOB");
+  log_msg("DO_CONFIG Got config - Starting configuration of IBOB");
 
   sock_send(client, "done config");
 
@@ -201,10 +205,9 @@ void do_initialize()
 /* Start command */
 int do_start()
 {
-  //log_msg("IBOB_CONTROL got start");
-  //log_msg("Starting sending of data.");
+  log_msg("IBOB_CONTROL got start");
 
-  sock_send(client, "done start\n");
+  sock_send(client, "done start");
 
   running = 1;
 
@@ -214,10 +217,9 @@ int do_start()
 /* Stop command */
 int do_stop()
 {
-  //log_msg("IBOB_CONTROL got stop");
-  //log_msg("Stop sending of data.");
+  log_msg("IBOB_CONTROL got stop");
 
-  sock_send(client, "done stop\n");
+  sock_send(client, "done stop");
 
   running = 0;
   
@@ -227,10 +229,9 @@ int do_stop()
 // Shutdown command
 int do_shutdown()
 {
-  //log_msg("IBOB_CONTROL got shutdown");
-  //log_msg("Stopping IBOB UDP stream.");
+  log_msg("IBOB_CONTROL got shutdown");
 
-  sock_send(client, "done shutdown\n");
+  sock_send(client, "done shutdown");
 
   // STOP UDP broadcast and close UDP and TCP SOCKETS
   char *message = "endudp";
@@ -238,6 +239,33 @@ int do_shutdown()
 
   close(tcpsock);
   close(udpsock);
+
+  return 0;
+}
+
+int do_sky()
+{
+  sock_send(client, "done sky");
+
+  MODE = 0;
+  BIN  = 0;
+  system("echo \"cal --state 0\n\" | nc -w 1 localhost 9000");
+
+  return 0;
+}
+int do_hot()
+{
+  sock_send(client, "done hot");
+
+  MODE = 1;
+  BIN  = 1;
+  system("echo \"cal --state 1\n\" | nc -w 1 localhost 9000");
+
+  return 0;
+}
+int do_cold()
+{
+  sock_send(client, "done cold");
 
   return 0;
 }
@@ -277,17 +305,27 @@ void send_data()
   outgoing.sdss.which_spec = WHICH_SPEC;
   outgoing.sdss.nparts = NPARTS;
   outgoing.sdss.nchans = NPOINTS;
+  outgoing.sdss.depth = 1;
 
-  outgoing.sdss.bin = 0;	//0=sig, 1=ref
+  outgoing.sdss.mode = MODE;
+  outgoing.sdss.bin  = BIN;
+  
+  start_time.tv_sec = end_time.tv_sec;
+  start_time.tv_nsec = end_time.tv_nsec;
+  clock_gettime(CLOCK_REALTIME, &end_time);
+
   outgoing.sdss.start_time[0] = start_time.tv_sec;
   outgoing.sdss.start_time[1] = start_time.tv_nsec;
   outgoing.sdss.end_time[0] = end_time.tv_sec;
   outgoing.sdss.end_time[1] = end_time.tv_nsec;
 
+  outgoing.sdss.error_bits = 0;
+  outgoing.sdss.int_time = 1000000.; //40 msec * 25 = 1.0 sec
+
   // IBOB SPECIFIC
   int i;
   int packet;
-  int integration=10;
+  int integration=25;
   char label;
   unsigned char bram;     //8
   unsigned char nbram;    //8
@@ -357,7 +395,7 @@ void send_data()
     if(packet==(8*integration)-1){
       for(i=0; i<1024; i++){
         //printf("%d %" PRIu64 "\n", i, (uint64_t) (lsb[i]+(msb[i]<<32)) / integration);	// DEBUG OUTPUT TO SCREEN
-        outgoing.data[i] = (uint64_t) (lsb[i]+(msb[i]<<32)) /integration;			// BUILD OUTPUT TO CATCHER
+        outgoing.data[i] = 1000.*(uint64_t) (lsb[i]+(msb[i]<<32)) /integration;			// BUILD OUTPUT TO CATCHER
       }
     }
   }
@@ -372,21 +410,28 @@ void send_data()
 int main(int argc, char **argv)
 {
   int n, sel;   // sockets
+	
+  do_initialize();			//Start sending UDP streamed data to CATCHER
+  usleep(3000);
 
   setCactusEnvironment();               // get to all the telescope environment variables
+   
+  putenv("LOGDIR=/tmp");
 
   log_open("ibob_control", 3);
 
-  sock_bind("IBOB_CONTROL");		// our commands come in here
+  //sock_bind("IBOB_CONTROL");		// our commands come in here
+  sock_bind("ARO_CONTROL");		// our commands come in here
   sock_bufct(sizeof(outgoing)+80);
 
-  //log_msg("IBOB_CONTROL Started");
+  log_msg("IBOB_CONTROL Started");
+  //
 
   /* main loop: send data if available, get command, parse, execute */
   while(1) 
   {
 
-    usleep(10000);   // wait a few milliseconds
+    usleep(10);   // wait a few milliseconds
 
     if(running) // new data wants to be sent to catcher
     {
@@ -403,14 +448,15 @@ int main(int argc, char **argv)
       sel = sock_sel(msgbuf, &n, 0, 0, 1, 0);    // read the msg
       if (sel < 0)
       {
-        //log_msg("Sock_sel returned %d", sel);
+        log_msg("Sock_sel returned %d", sel);
       }
       else
       {
 
 	if (!client){
           client = sock_connect("SPEC_ARO_CATCHER");
-	  printf("connected to CATCHER\n");
+
+	  log_msg("connected to CATCHER");
 	}
 
         if (n == sizeof(cfg)) 
@@ -423,14 +469,14 @@ int main(int argc, char **argv)
         /* Look for the command to do */
         if (msgbuf[n-1] == '\n') msgbuf[n-1] = 0;
 
-        printf("Got Command: %s\n", msgbuf);
+        log_msg("Got Command: %s", msgbuf);
 
         if(!strcmp(msgbuf,"newlog"))
         {
           log_newlog();	// Rotate the log files
         }
         else
-        if(!strcmp(msgbuf,"INIT"))
+        if(!strcmp(msgbuf,"init"))
         {
           do_initialize();		// Initialize hardware and UDP stream
         }
@@ -448,6 +494,26 @@ int main(int argc, char **argv)
         if(!strcmp(msgbuf,"shutdown"))
         {
           do_shutdown();		// Shutdown IBOB sending UDP stream
+        }
+        else
+        if(!strcmp(msgbuf,"sky"))
+        {
+          do_sky();		// Do a Sky	*flip out the VANE
+        }
+        else
+        if(!strcmp(msgbuf,"hot"))
+        {
+          do_hot();		// Do a Hot	*flip in the VANE
+        }
+        else
+        if(!strcmp(msgbuf,"cold"))
+        {
+          do_cold();		//  Do a Cold	*we don't have a cold load
+        }
+        else
+        if(!strcmp(msgbuf,"zero_in"))
+        {
+          sock_send(client, "done zero_in");
         }
         else
         {

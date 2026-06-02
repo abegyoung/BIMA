@@ -1,8 +1,8 @@
 # Makefile for spectrometer server (sending to ARO catcher)
 
 CC=gcc
-CFLAGS=-I../caclib/lib -I../caclib/include -c -Wall -O2
-LDFLAGS=-L../caclib/lib -lcaclib
+CFLAGS=-I/usr/local/include -c -Wall -O2 -Wno-unused-result -Wno-unused-but-set-variable
+LDFLAGS=-L/usr/local/lib -lcaclib 
 
 TARGETS = ibob_control if_control
 
