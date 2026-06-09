@@ -130,6 +130,8 @@ struct SPEC_CONFIG {
 
 struct SPEC_DATA_SET outgoing;   // for catcher to catch via sock write
 
+int zero_factor = 1;
+
 struct timespec start_time, end_time;   // one iteration
 
 char msgbuf[MAX_SOCK];
@@ -139,7 +141,11 @@ int do_config()
 {
   log_msg("DO_CONFIG Got config - Starting configuration of IBOB");
 
+  running = 0;
+  usleep(10000);
   sock_send(client, "done config");
+  usleep(10000);
+  running = 1;
 
   return 0;
 }
@@ -245,27 +251,65 @@ int do_shutdown()
 
 int do_sky()
 {
-  sock_send(client, "done sky");
-
   MODE = 0;
   BIN  = 0;
   system("echo \"cal --state 0\n\" | nc -w 1 localhost 9000");
+
+  running = 0;
+  usleep(10000);
+  sock_send(client, "done sky");
+  usleep(10000);
+  running = 1;
 
   return 0;
 }
 int do_hot()
 {
-  sock_send(client, "done hot");
-
   MODE = 1;
   BIN  = 1;
   system("echo \"cal --state 1\n\" | nc -w 1 localhost 9000");
 
+  running = 0;
+  usleep(10000);
+  sock_send(client, "done hot");
+  usleep(10000);
+  running = 1;
+
   return 0;
 }
+// set IF signal to zero signal using fake math not a real relay (waiting for IF processor!)
+int do_zero_in()
+{
+
+  MODE=1;
+  BIN=1;
+
+  log_msg("Setting IF to zero signal.");
+  zero_factor = 0;                    //     force all data to be multiplied by zero
+  sock_send(client, "done zero_in");
+  return 0;
+}
+
+// Restore the IF signal after zero check is done
+int do_zero_out()
+{
+
+  MODE=0;
+  BIN=0;
+
+  log_msg("Restoring IF from zero signal.");
+  zero_factor = 1;                    //     force all data to be multiplied by one
+  sock_send(client, "done zero_out");
+  return 0;
+}
+
 int do_cold()
 {
+  running = 0;
+  usleep(10000);
   sock_send(client, "done cold");
+  usleep(10000);
+  running = 1;
 
   return 0;
 }
@@ -320,12 +364,12 @@ void send_data()
   outgoing.sdss.end_time[1] = end_time.tv_nsec;
 
   outgoing.sdss.error_bits = 0;
-  outgoing.sdss.int_time = 1000000.; //40 msec * 25 = 1.0 sec
+  outgoing.sdss.int_time = 400000.; //40 msec * 10 = 400,000 usec
 
   // IBOB SPECIFIC
   int i;
   int packet;
-  int integration=25;
+  int integration=10;
   char label;
   unsigned char bram;     //8
   unsigned char nbram;    //8
@@ -395,10 +439,14 @@ void send_data()
     if(packet==(8*integration)-1){
       for(i=0; i<1024; i++){
         //printf("%d %" PRIu64 "\n", i, (uint64_t) (lsb[i]+(msb[i]<<32)) / integration);	// DEBUG OUTPUT TO SCREEN
-        outgoing.data[i] = 1000.*(uint64_t) (lsb[i]+(msb[i]<<32)) /integration;			// BUILD OUTPUT TO CATCHER
+        outgoing.data[i] = zero_factor * 500.*(uint64_t) (lsb[i]+(msb[i]<<32)) /integration;			// BUILD OUTPUT TO CATCHER
       }
     }
   }
+
+  outgoing.data[510]=0.5*(outgoing.data[509]+outgoing.data[513]);
+  outgoing.data[511]=0.5*(outgoing.data[509]+outgoing.data[513]);
+  outgoing.data[512]=0.5*(outgoing.data[509]+outgoing.data[513]);
 
   sock_write(client, (char *)&outgoing, sizeof(outgoing.sdss) + NPARTS * NPOINTS * sizeof(int));	// SEND to CATCHER
 
@@ -417,7 +465,6 @@ int main(int argc, char **argv)
   setCactusEnvironment();               // get to all the telescope environment variables
    
   putenv("LOGDIR=/tmp");
-
   log_open("ibob_control", 3);
 
   //sock_bind("IBOB_CONTROL");		// our commands come in here
@@ -513,7 +560,17 @@ int main(int argc, char **argv)
         else
         if(!strcmp(msgbuf,"zero_in"))
         {
-          sock_send(client, "done zero_in");
+		do_zero_in();
+        }
+        else
+        if(!strcmp(msgbuf,"zero_out"))
+        {
+		do_zero_out();
+        }
+        else
+        if(!strncmp(msgbuf,"bsp",3))
+        {
+          log_msg("got bsp");
         }
         else
         {

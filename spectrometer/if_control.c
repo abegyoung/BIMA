@@ -125,7 +125,7 @@ int indx = 0;
 
 int do_config()
 {
-  //log_msg("DO_CONFIG Got config - Starting configuration of IBOB");
+  log_msg("DO_CONFIG Got config - Starting configuration of IBOB");
 
   sock_send(client, "done config");
 
@@ -182,7 +182,7 @@ int do_initialize()
             switch(msgType){
                 case 0x0E0: {
                     u.b[0] = frame.data[3]; u.b[1] = frame.data[2]; u.b[2] = frame.data[1]; u.b[3] = frame.data[0]; //IFTOTPOW
-                    printf("IFTOTPOW %.3f mW\n",u.f);
+                    //printf("IFTOTPOW %.3f mW\n",u.f);
 		    found=1;
                 }
             }
@@ -289,16 +289,16 @@ int send_data()
   }
 
   ret = sock_send(client, stufBuf);
-  printf("%s", stufBuf);
+  //printf("%s", stufBuf);
 
   if(ret){
-    printf("sent Report: %s\n", stufBuf);
+    //printf("sent Report: %s\n", stufBuf);
+    //log_msg("sent Report: %s", stufBuf);
   }
 
   if(!ret)
   {
-    //log_msg("Lost connection to stuffer");
-    printf("Lost connection to stuffer\n");
+    log_msg("Lost connection to stuffer");
     running = 0;
   }
 
@@ -308,6 +308,7 @@ int send_data()
   {
     sendTimeStamp(PROCESS_DBEDBEFAKEDBE);
     //printf("send time stamp\n");
+    //log_msg("send time stamp");
   }
 
   return 0;
@@ -335,6 +336,7 @@ int main(int argc, char **argv)
 
   setCactusEnvironment();               // get to all the telescope environment variables
 
+  putenv("LOGDIR=/tmp");
   log_open("if_control", 3);
 
   sock_bind("NEWDBE");		// our commands come in here
@@ -361,14 +363,15 @@ int main(int argc, char **argv)
       sel = sock_sel(msgbuf, &n, 0, 0, 1, 0);    // read the msg
       if (sel < 0)
       {
-        //log_msg("Sock_sel returned %d", sel);
+        log_msg("Sock_sel returned %d", sel);
       }
       else
       {
 
 	if (!client){
           client = sock_connect("DBE_STUFFER");
-	  printf("connected to DBE_STUFFER\n");
+	  //printf("connected to DBE_STUFFER\n");
+	  log_msg("connected to DBE_STUFFER");
 	}
 
         if (n == sizeof(cfg)) 
@@ -381,7 +384,7 @@ int main(int argc, char **argv)
         /* Look for the command to do */
         if (msgbuf[n-1] == '\n') msgbuf[n-1] = 0;
 
-        printf("Got Command: %s\n", msgbuf);
+        log_msg("Got Command: %s", msgbuf);
 
         if(!strcmp(msgbuf,"newlog"))
         {
@@ -499,7 +502,7 @@ int main(int argc, char **argv)
         }
         else
         {
-          printf("Unknown Command: %s\n", msgbuf);
+          log_msg("Unknown Command: %s", msgbuf);
         }
 
       }

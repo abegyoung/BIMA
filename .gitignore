@@ -1,5 +1,19 @@
+# Ignore object files and libraries
 *.o
 *.a
-caclib/lib/sock
-rxServer/Server
-spectrometer/ibob_control
+
+# Ignore log files
+*.log
+
+# Ignore python cache directory
+gui/BiasServer/__pycache__/
+
+# Ignore executables
+Server
+ibob_control
+if_control
+vaned
+sock
+
+# Ignore firmware builds
+firmware/RCVR-CTRL/RCVR-CTRL.ino.*
