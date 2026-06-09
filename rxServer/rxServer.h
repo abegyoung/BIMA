@@ -16,5 +16,7 @@ struct SERVER {
   float L_Band;
   float GunnFreq;
   float LOFreq;
+  unsigned int calState;
+  float IFTOTPOW;
 } server;
 

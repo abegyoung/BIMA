@@ -65,7 +65,7 @@ double evaluate_polynomial(Polynomial *p, double x) {
 int sendStatus(int argc, char **argv, int fdout, int fderr)
 {
 
-  tellUser(fdout, "SERVER %d %d %d %.3f %.3f %.3f\n", server.BandSelect, server.YIGHarmonicN, server.GunnHarmonicM, server.GunnFreq/1000., server.LOFreq/1000., server.L_Band);
+  tellUser(fdout, "SERVER %d %d %d %.3f %.3f %.3f %s\n", server.BandSelect, server.YIGHarmonicN, server.GunnHarmonicM, server.GunnFreq/1000., server.LOFreq/1000., server.L_Band, (server.calState ==0) ? "SKY" : "CAL");
 
   return 0;
 }
@@ -111,6 +111,8 @@ int doCal(int argc, char **argv, int fdout, int fderr)
   // SEND STATE to CAL pin
   snprintf(cmd_buffer, sizeof(cmd_buffer), "OUTP %d\n", state);
   tellSerial(device, cmd_buffer, reply);
+
+  server.calState = state;
 
   return 0;
 
@@ -168,7 +170,7 @@ int setLband(int argc, char **argv, int fdout, int fderr)
   }
 
   // Compute YIG coarse tuning
-  int dac = f_synth * slope + y_int;
+  int dac = f_synth * slope + y_int - 10;
 
   uint32_t canid;
   uint64_t candata;
@@ -269,7 +271,7 @@ int setFreq(int argc, char **argv, int fdout, int fderr)
   tellUser(fdout, cmd_buffer, reply);
 
   // Compute YIG coarse tuning
-  int dac = f_synth * slope + y_int;
+  int dac = f_synth * slope + y_int - 10;
 
   uint32_t canid;
   uint64_t candata;
@@ -334,6 +336,15 @@ int setFreq(int argc, char **argv, int fdout, int fderr)
 
   return 0;
     
+}
+
+int getIFtotalpower(int argc, char **argv, int fdout, int fderr)
+{
+  unsigned int avg = (unsigned short)strtod(argv[2], NULL);
+
+  tellUser(fdout, "IFTOTPOW %.6f\n", server.IFTOTPOW);
+
+  return 0;
 }
 
 int doBump(int argc, char **argv, int fdout, int fderr)

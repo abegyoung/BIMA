@@ -17,6 +17,7 @@ extern int setFreq( int, char **, int, int );
 extern int doBump( int, char **, int, int );
 extern int sendCan( int, char **, int, int );
 extern int sendStatus ( int, char **, int, int );
+extern int getIFtotalpower( int, char **, int, int );
 extern int doCal( int, char **, int, int );
 
 
@@ -181,6 +182,14 @@ struct cmd commands[] =
     1,
     {
       { "state", CMDARR_ARGF_REQ | CMDARR_ARGF_NUM | CMDARR_ARGF_RANGE, 2, {"0","1"} },
+    },
+  },
+  {
+    "iftotpow", &getIFtotalpower,
+    "Respond with IF Total Power in Watts",
+    1,
+    {
+      { "avg", CMDARR_ARGF_NUM | CMDARR_ARGF_RANGE, 2, {"0","10"} },
     },
   },
 
