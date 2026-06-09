@@ -2,7 +2,7 @@
  GCCVERSIONGT4 = $(shell expr `gcc -dumpversion | cut -f1 -d.` \> 4)
    DEBUG_FLAGS = -g -Wall
  FEDORA_CFLAGS = -Wformat-overflow=0 -Wno-stringop-truncation -Wno-old-style-definition
- CENTOS_CFLAGS =
+ CENTOS_CFLAGS =-Wformat-overflow=0 -Wno-stringop-truncation -Wno-old-style-definition
         CFLAGS += $(DEBUG_FLAGS) -D_DEFAULT_SOURCE
       INCLUDES = -I../include 
           LIBS = -L. -lcaclib -lm
