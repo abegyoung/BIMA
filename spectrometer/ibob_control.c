@@ -150,6 +150,29 @@ int do_config()
   return 0;
 }
 
+void clear_udp_buffer(int sockfd) {
+  char buffer[1500]; // Use a buffer large enough for a typical Ethernet frame (MTU)
+  ssize_t bytes_received;
+
+  while (1) {
+    bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), MSG_DONTWAIT, NULL, NULL);
+
+    if (bytes_received < 0) {
+      // Check for the non-blocking error code
+      if (errno == EWOULDBLOCK || errno == EAGAIN) {
+        // Buffer is empty, so we can stop.
+        break;
+      } else {
+      perror("recvfrom");
+      // Handle a different kind of error here
+        break;
+        }
+    }
+  // Packet was received successfully, but we do nothing with it.
+  // The loop will continue until the buffer is drained.
+  }
+}
+
 // Do all steps necessary to initialize spectrometer and start IBOB UDP stream
 void do_initialize()
 {
@@ -284,9 +307,23 @@ int do_zero_in()
   MODE=1;
   BIN=1;
 
+  // turn off observing
+  running = 0;
+  // clear the current UDP buffer from the spectrometer
+  clear_udp_buffer(udpsock);
+  // wait a moment
+  usleep(40000);
+
   log_msg("Setting IF to zero signal.");
   zero_factor = 0;                    //     force all data to be multiplied by zero
+
+  // clear the current UDP buffer from the spectrometer
+  clear_udp_buffer(udpsock);
+  // turn on observing
+  running = 1;
+
   sock_send(client, "done zero_in");
+
   return 0;
 }
 
@@ -297,8 +334,21 @@ int do_zero_out()
   MODE=0;
   BIN=0;
 
+  // turn off observing
+  running = 0;
+  // clear the current UDP buffer from the spectrometer
+  clear_udp_buffer(udpsock);
+  // wait a moment
+  usleep(40000);
+
   log_msg("Restoring IF from zero signal.");
   zero_factor = 1;                    //     force all data to be multiplied by one
+				      //
+  // clear the current UDP buffer from the spectrometer
+  clear_udp_buffer(udpsock);
+  // turn on observing
+  running = 1;
+
   sock_send(client, "done zero_out");
   return 0;
 }
@@ -314,28 +364,6 @@ int do_cold()
   return 0;
 }
 
-void clear_udp_buffer(int sockfd) {
-  char buffer[1500]; // Use a buffer large enough for a typical Ethernet frame (MTU)
-  ssize_t bytes_received;
-
-  while (1) {
-    bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), MSG_DONTWAIT, NULL, NULL);
-
-    if (bytes_received < 0) {
-      // Check for the non-blocking error code
-      if (errno == EWOULDBLOCK || errno == EAGAIN) {
-        // Buffer is empty, so we can stop.
-        break;
-      } else {
-      perror("recvfrom");
-      // Handle a different kind of error here
-        break;
-        }
-    }
-  // Packet was received successfully, but we do nothing with it.
-  // The loop will continue until the buffer is drained.
-  }
-}
 
 
 
