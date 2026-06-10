@@ -13,6 +13,7 @@ extern int setMonitor( int, char **, int, int );
 extern int setDAC( int, char **, int, int );
 extern int setCanOut( int, char **, int, int );
 extern int setLband( int, char **, int, int );
+extern int setLband_worker(int, int, int, float);
 extern int setFreq( int, char **, int, int );
 extern int doBump( int, char **, int, int );
 extern int sendCan( int, char **, int, int );

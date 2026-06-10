@@ -10,6 +10,11 @@ extern unsigned long long reverse_payload(unsigned long long);
 extern int tellUser(int, const char*, ...);
 extern int tellSerial(int, char *, char *);
 
+#define VYIGCAL_8 7.25
+#define VYIGOFF_8 -7261
+#define VYIGCAL_9 8.08166
+#define VYIGOFF_9 -7182
+
 // command callbacks go here
 
 int server_initialize()
@@ -127,15 +132,28 @@ int doCal(int argc, char **argv, int fdout, int fderr)
 //       2) set the backshort for peak power output on power meter
 //       3) adjust the L-band synth until lock watching Gunn phase lock monitor and error voltage
 //       4) determine mth harmonic of Gunn frequency (There are 3 possibilities for 3MM, 2 for 1MM)
+//
+// Jun 10, 2026
+// Converted setLband() to setLband() which is called by Commands.h setLband and a seperate setLband_worker()
+// which may be used by either the setLband command, or the setfreq command through setFreq() calling the worker
+//
 int setLband(int argc, char **argv, int fdout, int fderr)
 {
-  float y_int=0.;
-  float slope=0.;
-  float f_yig;
   int band          = (int)strtod(argv[2], NULL);
   int YIGHarmonicN  = (int)strtod(argv[4], NULL);
   int GunnHarmonicM = (int)strtod(argv[6], NULL);
   float f_synth     = (float)strtof(argv[8], NULL);
+
+  setLband_worker(band, YIGHarmonicN, GunnHarmonicM, f_synth);
+
+  return 0;
+}
+
+int setLband_worker(int band, int YIGHarmonicN, int GunnHarmonicM, float f_synth)
+{
+  float y_int=0.;
+  float slope=0.;
+  float f_yig;
 
   int device = 2; //GPIB DEVICE
   char cmd_buffer[24];
@@ -163,10 +181,14 @@ int setLband(int argc, char **argv, int fdout, int fderr)
   if (YIGHarmonicN==8){
     y_int = -7261;	//Fit for YIG coarse tune (bits) to L band synth (MHz)
     slope = 7.25;	//Offset
+    y_int = VYIGOFF_8;  //Fit for YIG coarse tune (bits) to L band synth (MHz)
+    slope = VYIGCAL_8;  //Offset
   }
   else if (YIGHarmonicN==9){
     y_int = -7182;
     slope = 8.08166;
+    y_int = VYIGOFF_9;  //Fit for YIG coarse tune (bits) to L band synth (MHz)
+    slope = VYIGCAL_9;  //Offset
   }
 
   // Compute YIG coarse tuning
@@ -190,13 +212,13 @@ int setLband(int argc, char **argv, int fdout, int fderr)
   if (server.BandSelect==3)
   {
     float f_yig = YIGHarmonicN * f_synth - 10.0; //MHz
-    server.GunnFreq = 0.001 * (server.GunnHarmonicM * f_yig + 50.0); //GHz
+    server.GunnFreq = (server.GunnHarmonicM * f_yig + 50.0); //GHz
     server.LOFreq = 1. * server.GunnFreq;
   }
   else if (server.BandSelect==1)
   {
     float f_yig = YIGHarmonicN * f_synth - 10.0; //MHz
-    server.GunnFreq = 0.001 * (server.GunnHarmonicM * f_yig + 50.0); //GHz
+    server.GunnFreq = (server.GunnHarmonicM * f_yig + 50.0); //GHz
     server.LOFreq = 3. * server.GunnFreq;
   }
 
@@ -210,51 +232,33 @@ int setFreq(int argc, char **argv, int fdout, int fderr)
   float f_synth;
   float freq = (float)strtof(argv[2], NULL);
 
-  int device = 2; //GPIB DEVICE
-  char cmd_buffer[24];
-  const char *prefix = "FR ";
   char reply[BUF_SIZE];
-
-#define VYIGCAL_8 7.25
-#define VYIGOFF_8 -7261
-#define VYIGCAL_9 8.08166
-#define VYIGOFF_9 -7182
 
   //Set harmonic number
   if (freq>=79.160 && freq<90.){
     band = 3;
     n = 8;		// X band YIG  output is nth harmonic of L band synth
     m = 9;		//MM band Gunn output is mth harmonic of X band synth
-    y_int = VYIGOFF_8;  //Fit for YIG coarse tune (bits) to L band synth (MHz)
-    slope = VYIGCAL_8;  //Offset
   }
   else if (freq>=90. && freq<100.){
     band = 3;
     n = 8;
     m = 10;
-    y_int = VYIGOFF_8;
-    slope = VYIGCAL_8;
   }
   else if (freq>=100. && freq<113.35){
     band = 3;
     n = 9;
     m = 10;
-    y_int = VYIGOFF_9;
-    slope = VYIGCAL_9;
   }
   else if (freq>=211.11 && freq<240.){
     band = 1;
     n = 8;
     m = 8;
-    y_int = VYIGOFF_8;
-    slope = VYIGCAL_8;
   }
   else if (freq>=240. && freq<=273.04){
     band = 1;
     n = 8;
     m = 9;
-    y_int = VYIGOFF_9;
-    slope = VYIGCAL_9;
   }
   else
     return -1;
@@ -266,20 +270,8 @@ int setFreq(int argc, char **argv, int fdout, int fderr)
   else if (band==1)
     f_synth = ((((freq/3.)-50.)/m)+10.)/n;
 
-  snprintf(cmd_buffer, sizeof(cmd_buffer), "%s%.6f MZ\n", prefix, f_synth);
-  tellSerial(device, cmd_buffer, reply);
-  tellUser(fdout, cmd_buffer, reply);
 
-  // Compute YIG coarse tuning
-  int dac = f_synth * slope + y_int - 10;
-
-  uint32_t canid;
-  uint64_t candata;
-
-  canid = 0x080;
-  candata = ((uint64_t)0<<56)|((uint64_t)dac<<40);
-
-  writeCan(canid, candata);
+  setLband_worker(band, n, m, f_synth);
 
   // Compute Tuner and Backshort for H106 Carlstrom Gunn
   double Tuner[] = {1496.164355f, -35.604355f, 0.28455f, -0.000765f,};
@@ -320,19 +312,6 @@ int setFreq(int argc, char **argv, int fdout, int fderr)
   candata = ((uint64_t)motor<<56)|((uint64_t)speed<<48)|((uint64_t)position<<32);
   writeCan(canid, candata);
 */
-
-  // Once we're done setting the LO frequency, update the server struct before leaving
-  server.BandSelect    = band;
-  server.YIGHarmonicN  = n;
-  server.GunnHarmonicM = m;
-
-  server.L_Band        = f_synth;
-
-  if (band==3)
-    server.GunnFreq    = freq;
-  else if (band==1)
-    server.GunnFreq    = freq/3.;
-  server.LOFreq        = freq;
 
   return 0;
     
