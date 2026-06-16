@@ -274,29 +274,48 @@ int do_shutdown()
 
 int do_sky()
 {
+  // turn off observing
+  running = 0;
+  // clear the current UDP buffer from the spectrometer
+  clear_udp_buffer(udpsock);
+
   MODE = 0;
   BIN  = 0;
   system("echo \"cal --state 0\n\" | nc -w 1 localhost 9000");
 
-  running = 0;
-  usleep(10000);
-  sock_send(client, "done sky");
-  usleep(10000);
+  // wait a moment
+  usleep(500000);
+
+  // clear the current UDP buffer from the spectrometer
+  clear_udp_buffer(udpsock);
+  // turn on observing
   running = 1;
+
+  sock_send(client, "done sky");
 
   return 0;
 }
 int do_hot()
 {
+
+  // turn off observing
+  running = 0;
+  // clear the current UDP buffer from the spectrometer
+  clear_udp_buffer(udpsock);
+
   MODE = 1;
   BIN  = 1;
   system("echo \"cal --state 1\n\" | nc -w 1 localhost 9000");
 
-  running = 0;
-  usleep(10000);
-  sock_send(client, "done hot");
-  usleep(10000);
+  // wait a moment
+  usleep(500000);
+
+  // clear the current UDP buffer from the spectrometer
+  clear_udp_buffer(udpsock);
+  // turn on observing
   running = 1;
+
+  sock_send(client, "done hot");
 
   return 0;
 }
