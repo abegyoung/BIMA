@@ -26,11 +26,15 @@
 #include <errno.h>        
 #include <stddef.h>       
 #include <stdarg.h>       
+#include <fcntl.h>
 
+#include "shared.h"
+#include <sys/mman.h>
 #include <caclib_proto.h>
 
 // mboxdef
 struct SOCK *client;		// MBOX socket to send data to CATCHER
+SHARED_DATA *shm;
 
 #define MAX_SOCK 1 + 64*sizeof(char)  /* Biggest sock msg */
 
@@ -45,6 +49,9 @@ int do_sky()
 
 int do_hot()
 {
+  if(shm->fake)
+    shm->fake = 1;
+
   system("echo \"cal --state 1\n\" | nc -w 1 localhost 9000");
   sock_send(client, "VANEIN");
   return 0;
@@ -53,6 +60,24 @@ int do_hot()
 int main(int argc, char **argv)
 {
   int n, sel;   // sockets
+  int fd;
+  const char *shm_filename = SHM_NAME;
+  fd = shm_open(shm_filename, O_CREAT | O_RDWR, 0600);
+  if(fd<0){
+    perror("shm_open");
+    return 1;
+  }
+  if(ftruncate(fd, sizeof(SHARED_DATA))<0){
+    perror("ftruncate");
+    return 1;
+  }
+  shm = mmap(NULL, sizeof(SHARED_DATA),PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+  if(shm == MAP_FAILED){
+    perror("mmap");
+    return 1;
+  }
+  shm->fake=0;
+
 	
   setCactusEnvironment();               // get to all the telescope environment variables
    
@@ -102,6 +127,27 @@ int main(int argc, char **argv)
         if(!strcmp(msgbuf,"VANEHOME"))
         {
           do_sky();		// take the hot load out
+        }
+        else
+        if(!strcmp(msgbuf,"fake_cal"))
+        {
+          shm->fake=1;
+	  usleep(1000000);
+        }
+        else
+        if(!strcmp(msgbuf,"fake_ref"))
+        {
+          shm->fake=2;
+        }
+        else
+        if(!strcmp(msgbuf,"fake_sig"))
+        {
+          shm->fake=3;
+        }
+        else
+        if(!strcmp(msgbuf,"real"))
+        {
+          shm->fake=0;
         }
         else
         {

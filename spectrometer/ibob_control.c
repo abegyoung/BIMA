@@ -28,7 +28,10 @@
 #include <errno.h>        
 #include <stddef.h>       
 #include <stdarg.h>       
+#include <fcntl.h>
+#include <sys/mman.h>
 
+#include "shared.h"
 #include <caclib_proto.h>
 
 //for PRI64
@@ -58,6 +61,7 @@ int tcpsock;			// TCP socket to communicate to IBOB
 
 // mboxdef
 struct SOCK *client;		// MBOX socket to send data to CATCHER
+SHARED_DATA *shm;
 
 // STRUCT GLOBALS
 int MODE = 0; //0=sig, 1=hot, 2=sky
@@ -69,6 +73,8 @@ void diep(char *s)
         exit(1);
 }
 
+// control program globals
+int k=0;			// counter 0-4 for uniqe fivePoint spectra
 int running = 0;		// whether we are sending data out
 
 /* Need to declare start_time and end_time because timespec is 64 bit here */
@@ -387,8 +393,10 @@ int do_cold()
 
 
 // send a packet of spectral data to the catcher or whatever
-void send_data()
+int send_data()
 {
+  int i;
+
   // CATCHER SPECIFIC
   // Format data for catcher
   struct SPEC_DATA_SET outgoing;
@@ -413,8 +421,46 @@ void send_data()
   outgoing.sdss.error_bits = 0;
   outgoing.sdss.int_time = 400000.; //40 msec * 10 = 400,000 usec
 
+  // ENTER FAKE DATA
+  int temp_var;
+  if (shm->fake==1){
+    FILE *fd_fake = fopen(FAKE_CAL, "r");
+    for(i=0;i<1024;i++){
+       fscanf(fd_fake, "%d", &temp_var);
+       outgoing.data[i] = (uint64_t) 1.6 * (100000 * zero_factor * temp_var + 8000);
+    }
+    fclose(fd_fake);
+    usleep(400000);
+    sock_write(client, (char *)&outgoing, sizeof(outgoing.sdss) + NPARTS * NPOINTS * sizeof(int));
+    return 0;
+  }
+  if(shm->fake==2){
+    FILE *fd_fake = fopen(FAKE_REF, "r");
+    for(i=0;i<1024;i++){
+       fscanf(fd_fake, "%d", &temp_var);
+       outgoing.data[i] = (uint64_t) 100000 * zero_factor * temp_var + 8000;
+    }
+    fclose(fd_fake);
+    usleep(400000);
+    sock_write(client, (char *)&outgoing, sizeof(outgoing.sdss) + NPARTS * NPOINTS * sizeof(int));
+    return 0;
+  }
+  if(shm->fake==3){
+    FILE *fd_fake = fopen(FAKE_SIGS[k], "r");
+    k+=1;
+    for(i=0;i<1024;i++){
+       fscanf(fd_fake, "%d", &temp_var);
+       outgoing.data[i] = (uint64_t) 100000 * zero_factor * temp_var + 8000;
+    }
+    fclose(fd_fake);
+    usleep(400000);
+    sock_write(client, (char *)&outgoing, sizeof(outgoing.sdss) + NPARTS * NPOINTS * sizeof(int));
+    if(k==5) k=0;
+    return 0;
+  }
+  // LEAVE FAKE FOR REAL
+
   // IBOB SPECIFIC
-  int i;
   int packet;
   int integration=10;
   char label;
@@ -496,6 +542,8 @@ void send_data()
   outgoing.data[512]=0.5*(outgoing.data[509]+outgoing.data[513]);
 
   sock_write(client, (char *)&outgoing, sizeof(outgoing.sdss) + NPARTS * NPOINTS * sizeof(int));	// SEND to CATCHER
+													//
+  return 0;
 
 }
 
@@ -505,6 +553,18 @@ void send_data()
 int main(int argc, char **argv)
 {
   int n, sel;   // sockets
+  int fd;
+  fd = shm_open(SHM_NAME, O_RDWR, 0600);
+  if(fd<0){
+    perror("shm_open");
+    return 1;
+  }
+  shm = mmap(NULL, sizeof(SHARED_DATA),PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+  if(shm == MAP_FAILED){
+    perror("mmap");
+    return 1;
+  }
+
 	
   do_initialize();			//Start sending UDP streamed data to CATCHER
   usleep(3000);
