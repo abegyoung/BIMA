@@ -16,7 +16,7 @@ void log_init( const char *name )
 /// LOG_NOTICE     normal, but significant, condition
 /// LOG_INFO       informational message
 /// LOG_DEBUG      debug-level message
-void log_msg( int priority, const char *format, ... )
+void log_server_msg( int priority, const char *format, ... )
 {
   va_list args;
   va_start( args, format );

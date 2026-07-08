@@ -175,7 +175,7 @@ int setLband_worker(int band, int YIGHarmonicN, int GunnHarmonicM, float f_synth
   // SEND FR 1200.000000 MZ to synth
   snprintf(cmd_buffer, sizeof(cmd_buffer), "%s%.6f MZ\n", prefix, f_synth);
   tellSerial(device, cmd_buffer, reply);
-  printf("%s", cmd_buffer);
+  //printf("%s", cmd_buffer);
 
   //Set harmonic number
   if (YIGHarmonicN==8){

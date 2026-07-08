@@ -1,0 +1,2 @@
+void writeSock(char *, char *);
+

@@ -488,7 +488,7 @@ int dispatch( char *cmdbuf, int fdout, int fderr, const struct cmd *cmds )
     snprintf( errmsg, DISPATCH_BUFLEN, "::%s Too many arguments '%s'\n",
         __FUNCTION__, cmdbuf );
     write( fderr, errmsg, strlen( errmsg ) );
-    log_msg( LOG_ERR, errmsg );
+    log_server_msg( LOG_ERR, errmsg );
     return DISPATCH_ERR;
   }
 
@@ -498,7 +498,7 @@ int dispatch( char *cmdbuf, int fdout, int fderr, const struct cmd *cmds )
     snprintf( errmsg, DISPATCH_BUFLEN, "::%s Unclosed quote '%s'\n",
         __FUNCTION__, cmdbuf );
     write( fderr, errmsg, strlen( errmsg ) );
-    log_msg( LOG_ERR, errmsg );
+    log_server_msg( LOG_ERR, errmsg );
     return DISPATCH_ERR;
   }
 
@@ -515,7 +515,7 @@ int dispatch( char *cmdbuf, int fdout, int fderr, const struct cmd *cmds )
     snprintf( errmsg, DISPATCH_BUFLEN, "::%s Unknown command '%s'\n",
         __FUNCTION__, argv[0] );
     write( fderr, errmsg, strlen( errmsg ) );
-    log_msg( LOG_ERR, errmsg );
+    log_server_msg( LOG_ERR, errmsg );
     return DISPATCH_ERR;
   }
 
@@ -523,7 +523,7 @@ int dispatch( char *cmdbuf, int fdout, int fderr, const struct cmd *cmds )
   if ( ( err = all_args_valid( argc, argv, cmdp, errmsg ) ) != DISPATCH_OK )
   {
     write( fderr, errmsg, strlen( errmsg ) );
-    log_msg( LOG_ERR, errmsg );
+    log_server_msg( LOG_ERR, errmsg );
     return err;
   }
 
@@ -531,7 +531,7 @@ int dispatch( char *cmdbuf, int fdout, int fderr, const struct cmd *cmds )
   if ( ( err = args_value_number( argc, argv, cmdp, errmsg ) ) != DISPATCH_OK )
   {
     write( fderr, errmsg, strlen( errmsg ) );
-    log_msg( LOG_ERR, errmsg );
+    log_server_msg( LOG_ERR, errmsg );
     return err;
   }
 
@@ -540,7 +540,7 @@ int dispatch( char *cmdbuf, int fdout, int fderr, const struct cmd *cmds )
   if ( ( err = args_value_range( argc, argv, cmdp, errmsg ) ) != DISPATCH_OK )
   {
     write( fderr, errmsg, strlen( errmsg ) );
-    log_msg( LOG_ERR, errmsg );
+    log_server_msg( LOG_ERR, errmsg );
     return err;
   }
 
@@ -549,7 +549,7 @@ int dispatch( char *cmdbuf, int fdout, int fderr, const struct cmd *cmds )
   if ( ( err = args_value_list( argc, argv, cmdp, errmsg ) ) != DISPATCH_OK )
   {
     write( fderr, errmsg, strlen( errmsg ) );
-    log_msg( LOG_ERR, errmsg );
+    log_server_msg( LOG_ERR, errmsg );
     return err;
   }
 
@@ -557,7 +557,7 @@ int dispatch( char *cmdbuf, int fdout, int fderr, const struct cmd *cmds )
   if ( ( err = all_required_args( argc, argv, cmdp, errmsg ) ) != DISPATCH_OK )
   {
     write( fderr, errmsg, strlen( errmsg ) );
-    log_msg( LOG_ERR, errmsg );
+    log_server_msg( LOG_ERR, errmsg );
     return err;
   }
 
@@ -565,12 +565,12 @@ int dispatch( char *cmdbuf, int fdout, int fderr, const struct cmd *cmds )
   else
   {
     // Make the call to the function (finally!)
-    log_msg( LOG_INFO, "Command sent: %s", buf);
+    log_server_msg( LOG_INFO, "Command sent: %s", buf);
     if ( ( err = ( *( cmdp->func ) )( argc, argv, fdout, fderr ) ) != 0 )
     {
       snprintf( errmsg, DISPATCH_BUFLEN, "'%s' returned %d\n", argv[0], err );
       write( fderr, errmsg, strlen( errmsg ) );
-      log_msg( LOG_ERR, errmsg );
+      log_server_msg( LOG_ERR, errmsg );
       return err;
     }
 

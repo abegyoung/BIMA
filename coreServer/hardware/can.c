@@ -1,8 +1,11 @@
 #include "can.h"
+#include "sock.h"
 #include "hardware.h"
 #include "../Dispatch.h"
 #include "../Server.h"
+#include "../Logging.h"
 #include <pthread.h>
+#include <syslog.h>
 
 extern int tellUser(int, const char *fmt, ...);
 
@@ -88,6 +91,7 @@ void *can_receiver_thread(void *arg) {
   struct sockaddr_can addr;
   struct ifreq ifr;
   struct can_frame frame;
+  char buf[22];
 
   int last_dest = -1;
 
@@ -105,7 +109,6 @@ void *can_receiver_thread(void *arg) {
   s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
   if (s < 0) {
     perror("Socket");
-    return 1;
   }
 
   // Set interface name (can0)
@@ -113,7 +116,6 @@ void *can_receiver_thread(void *arg) {
   if (ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
     perror("SIOCGIFINDEX");
     close(s);
-    return 1;
   }
 
   // Bind socket to the CAN interface
@@ -122,7 +124,6 @@ void *can_receiver_thread(void *arg) {
   if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
     perror("Bind");
     close(s);
-    return 1;
   }
 
   printf("[CAN thread] Listening on can0...\n");
@@ -176,6 +177,12 @@ void *can_receiver_thread(void *arg) {
         case 0x0E3: {
           tellUser(fdout, "TTL0 " BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(frame.data[7]));
           tellUser(fdout, "TTL1 " BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(frame.data[6]));
+	  sprintf(buf, "W %2X 80", ((~frame.data[6] & 0x01)<<7));	//TTL1 bit 1 = X lock
+	  writeSock("SAMBUSD", buf);
+	  //log_server_msg( LOG_INFO, "Sock sent: %s", buf);
+	  sprintf(buf, "W %2X 100", ((~frame.data[6] & 0x02)<<7));	//TTL1 bit 2 = MM lock
+	  writeSock("SAMBUSD", buf);
+	  //log_server_msg( LOG_INFO, "Sock sent: %s", buf);
 	  //tellUser(fdout, "SERVER %d %d %d %.3f %.3f", server.BandSelect, server.YIGHarmonicM, server.GunnHarmonicN, server.GunnFreq, server.L_Band);
 	  break;
         }

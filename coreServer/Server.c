@@ -138,7 +138,7 @@ int start_conn(int server_port)
   {
     err = errno;
     perror("socket: ");
-    log_msg( LOG_ERR, "::%s::socket (err=%d) %s",
+    log_server_msg( LOG_ERR, "::%s::socket (err=%d) %s",
         __FUNCTION__, err, strerror( err ) );
     exit(1);
   }
@@ -148,7 +148,7 @@ int start_conn(int server_port)
   {
     err = errno;
     perror("setsocketopt: ");
-    log_msg( LOG_ERR, "::%s::setsockopt (err=%d) %s",__FUNCTION__, err, strerror( err ) );
+    log_server_msg( LOG_ERR, "::%s::setsockopt (err=%d) %s",__FUNCTION__, err, strerror( err ) );
     exit(1);
   }
   
@@ -163,7 +163,7 @@ int start_conn(int server_port)
   {
     err = errno;
     perror("bind: ");
-    log_msg( LOG_ERR, "::%s::bind (err=%d) %s",__FUNCTION__, err, strerror( err ) );
+    log_server_msg( LOG_ERR, "::%s::bind (err=%d) %s",__FUNCTION__, err, strerror( err ) );
     exit(1);
   }
 
@@ -171,10 +171,10 @@ int start_conn(int server_port)
   {
     err = errno;
     perror("listen: ");
-    log_msg( LOG_ERR, "::%s::listen (err=%d) %s",__FUNCTION__, err, strerror( err ) );
+    log_server_msg( LOG_ERR, "::%s::listen (err=%d) %s",__FUNCTION__, err, strerror( err ) );
     exit(1);
   }
-  log_msg( LOG_INFO, "::%s listening on port %d!", __FUNCTION__, server_port );
+  log_server_msg( LOG_INFO, "::%s listening on port %d!", __FUNCTION__, server_port );
   return(server_fd);
 }
 
@@ -185,7 +185,7 @@ int manage_conn( int server_fd, const struct cmd *cmds )
   int err = 0;
   char linebuf[DISPATCH_BUFLEN];
 
-  log_msg( LOG_INFO, "::%s Initializing connection list.", __FUNCTION__ );
+  log_server_msg( LOG_INFO, "::%s Initializing connection list.", __FUNCTION__ );
   struct conn client_list[MAX_CLIENTS];
   connarr_init( client_list, MAX_CLIENTS);
 
@@ -217,12 +217,12 @@ int manage_conn( int server_fd, const struct cmd *cmds )
 		// Could we find an entry? If not, we are maxed out.
 		if ( newc == -1 )
 		  {
-		    log_msg( LOG_ERR, "::%s Maximum load... denied client.", __FUNCTION__ );
+		    log_server_msg( LOG_ERR, "::%s Maximum load... denied client.", __FUNCTION__ );
 		    close( client_fd );
 		  }
 		else
 		  {
-		    log_msg( LOG_INFO, "::%s Opened connection fd #%d.",
+		    log_server_msg( LOG_INFO, "::%s Opened connection fd #%d.",
 			     __FUNCTION__, client_fd );
 		  }
 	      }
@@ -239,13 +239,13 @@ int manage_conn( int server_fd, const struct cmd *cmds )
 				    client_list[cc].readbuf, DISPATCH_BUFLEN, &client_list[cc].readp,linebuf);
 		    if ( err < 0 )
 		      {
-			log_msg( LOG_ERR, "::%s::readline (err=%d) message: %s",
+			log_server_msg( LOG_ERR, "::%s::readline (err=%d) message: %s",
 				 __FUNCTION__, err, linebuf );
 		      }
 		    // Did the connection close?
 		    else if ( err == 0 || pipe_deadflag )
 		      {
-			log_msg( LOG_ERR, "::%s connection closed (err=%d) fd #%d",
+			log_server_msg( LOG_ERR, "::%s connection closed (err=%d) fd #%d",
 				 __FUNCTION__, err, client_list[cc].fdin );
 			connarr_close( client_list[cc].fdin, client_list, MAX_CLIENTS );
 			if(pipe_deadflag)  // reset the flag if needed
@@ -254,7 +254,7 @@ int manage_conn( int server_fd, const struct cmd *cmds )
 		    // Do we only have a partial line?
 		    else if ( err > 0 && strlen( linebuf ) == 0 )
 		      {
-			log_msg( LOG_ERR, "::%s Only got a partial line (err=%d) fd #%d",
+			log_server_msg( LOG_ERR, "::%s Only got a partial line (err=%d) fd #%d",
 				 __FUNCTION__, err, client_list[cc].fdin );
 		      }
 		    // Did we get a complete line?
@@ -263,13 +263,13 @@ int manage_conn( int server_fd, const struct cmd *cmds )
 			err = dispatch( linebuf,client_list[cc].fdout, client_list[cc].fderr, cmds );
 			if ( err == DISPATCH_ERR )
 			  {
-			    log_msg( LOG_ERR, "::%s Error dispatching line (err=%d) fd #%d",
+			    log_server_msg( LOG_ERR, "::%s Error dispatching line (err=%d) fd #%d",
 				     __FUNCTION__, err, client_list[cc].fdin );
 			  }
 			else if ( err == DISPATCH_QUIT )
 			  {
 			    err=0;
-			    log_msg( LOG_ERR, "::%s connection closed (err=%d) fd #%d",
+			    log_server_msg( LOG_ERR, "::%s connection closed (err=%d) fd #%d",
 				     __FUNCTION__, err, client_list[cc].fdin );
 			    connarr_close( client_list[cc].fdin, client_list, MAX_CLIENTS );
 			  }
@@ -314,18 +314,18 @@ int main (int argc, char **argv)
 	serv_port = strtol(argv[1], &p, 10);
 	if(*p != '\0' || serv_port > 9010 || serv_port < 9000)
 	  {
-	    log_msg( LOG_ERR, "Invalid port number %d\n", (int)serv_port);
+	    log_server_msg( LOG_ERR, "Invalid port number %d\n", (int)serv_port);
 	    return ERROR;
 	  }
       }
     if((err = server_initialize()) )
-      log_msg(LOG_ERR, "Error in server initialization\n");
+      log_server_msg(LOG_ERR, "Error in server initialization\n");
     
     fd = start_conn((int)serv_port); 
     err = manage_conn( fd, commands );
 
     if( (err = server_shutdown()) )
-      log_msg(LOG_ERR, "Error in server shutdown\n");
+      log_server_msg(LOG_ERR, "Error in server shutdown\n");
     
     return err;
 }

@@ -1,12 +1,13 @@
 # Makefile for stripped down socket server
 
 CC=gcc
-CFLAGS=-c -Wall -O2 -Wno-unused-result -Wno-unused-variable
-LIBFLAGS=
+CFLAGS=-I/usr/local/include -c -Wall -O2 -Wno-unused-result -Wno-unused-variable
+LIBFLAGS=-L/usr/local/lib -lcaclib
 
 OBJS = Commands.o \
         ../coreServer/hardware/serial.o \
         ../coreServer/hardware/can.o \
+        ../coreServer/hardware/sock.o \
 	../coreServer/Server.o \
 	../coreServer/Logging.o \
 	../coreServer/CmdArr.o \
