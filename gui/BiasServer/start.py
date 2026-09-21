@@ -119,7 +119,7 @@ class SocketWorker(QObject):
 # ______________ GLOBALS ________________
 s=0
 sport = 9000
-serverip = '192.168.0.51'
+serverip = '127.0.0.1'
 numPoints = 25
 start = 0
 stop = 15000
@@ -171,6 +171,8 @@ class Window(QMainWindow, form_class):
         ### SIGNALS AND SLOTS ###
         self.pushButton.clicked.connect(self.btn_clicked)
         self.timer.toggled.connect(self.startButton_clicked)
+
+        self.apiBias.valueChanged.connect(self.updateBIAS_API_NODE)
         self.blankingBias.toggled.connect(self.blankingBias_clicked)
         self.blankingPam.toggled.connect(self.blankingPam_clicked)
         self.blankingRcvr.toggled.connect(self.blankingRcvr_clicked)
@@ -726,7 +728,8 @@ class Window(QMainWindow, form_class):
         time.sleep(3)
 
     def btn_Vgap_clicked(self):
-        msgid = f"0x{((0<<28)|(1<<27)|(0x087<<17)|(208<<9)|(29)):08X}"
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x087<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x0000000000000000\n" % msgid
         self.worker.send_command(cmd)
 
@@ -740,13 +743,19 @@ class Window(QMainWindow, form_class):
             cmd="setfeedback --mask 0\n"
         self.worker.send_command(cmd)
 
+    def updateBIAS_API_NODE(self):
+        node = int(self.apiBias.value())
+        cmd="setBiasAPI --node %d\n" % node
+        self.worker.send_command(cmd)
+
     def blankingBias_clicked(self, enabled):
-        node = self.apiBias.value()
+        node = int(self.apiBias.value())
         state=0
         if enabled:
             state=1
         msgid = f"0x{((0<<28)|(1<<27)|(0x3FB<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0xE11EA55AC300%02X00\n" % (msgid, state)
+        print(cmd)
         self.worker.send_command(cmd)
 
     def blankingPam_clicked(self, enabled):
@@ -779,57 +788,66 @@ class Window(QMainWindow, form_class):
     def updateVmixGainOffset(self):                                                                 # 0x30E Vmix ADC Gain & Offset
         gain =   int(self.setVmixGain.value()*10.)
         offset = int(self.setVmixOffset.value()*1000.)
-        msgid = f"0x{((0<<28)|(1<<27)|(0x30E<<17)|(208<<9)|(29)):08X}"
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x30E<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x%04X%04X00000000\n" % (msgid, gain, offset)
         self.worker.send_command(cmd)
 
     def updateImixGainOffset(self):                                                                 # 0x310 Vmix ADC Gain & Offset
         gain = int(self.setImixGain.value()*10.)
         offset = int(self.setImixOffset.value()*1000.)
-        msgid = f"0x{((0<<28)|(1<<27)|(0x310<<17)|(208<<9)|(29)):08X}"
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x310<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x%04X%04X00000000\n" % (msgid, gain, offset)
         self.worker.send_command(cmd)
 
     def updateVmixDACOffset(self):                                                                  # 0x312 Vmix ADC Gain & Offset
         offset = int(self.setVmixDACOffset.value()*1000.) 
-        msgid = f"0x{((0<<28)|(1<<27)|(0x312<<17)|(208<<9)|(29)):08X}" 
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x312<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x%04X000000000000\n" % (msgid, offset)
         self.worker.send_command(cmd)
 
     def updateRseries(self):                                                                        # 0x304 Vmix ADC Gain & Offset
         Rseries = int(self.setRseries.value()*1000.)
-        msgid = f"0x{((0<<28)|(1<<27)|(0x304<<17)|(208<<9)|(29)):08X}" 
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x304<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x%04X000000000000\n" % (msgid, Rseries)
         self.worker.send_command(cmd)
 
     def updateRsense(self):                                                                         # 0x305 Vmix ADC Gain & Offset
         Rsense = int(self.setRsense.value()*1000.) 
-        msgid = f"0x{((0<<28)|(1<<27)|(0x305<<17)|(208<<9)|(29)):08X}" 
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x305<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x%04X000000000000\n" % (msgid, Rsense)
         self.worker.send_command(cmd)
 
 ### GETS ###
     def getVmix_clicked(self):                                                                      # 0x30F Vmix ADC Gain & Offset
-        msgid = f"0x{((0<<28)|(1<<27)|(0x30F<<17)|(208<<9)|(29)):08X}"
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x30F<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x0000000000000000\n" % msgid
         self.worker.send_command(cmd)
         # returned values in 0x20F displayed in textBox
 
     def getImix_clicked(self):                                                                      # 0x311 Vmix ADC Gain & Offset
-        msgid = f"0x{((0<<28)|(1<<27)|(0x311<<17)|(208<<9)|(29)):08X}"
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x311<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x0000000000000000\n" % msgid
         self.worker.send_command(cmd)
         # returned values in 0x211 displayed in textBox
 
     def getVmixDACOffset_clicked(self):                                                             # 0x313 Vmix ADC Gain & Offset
-        msgid = f"0x{((0<<28)|(1<<27)|(0x313<<17)|(208<<9)|(29)):08X}"
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x313<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x0000000000000000\n" % msgid
         self.worker.send_command(cmd)
         # returned values in 0x213 displayed in textBox
 
 ### SAVE VALUES ###
     def writeEEPROM_clicked(self):                                                                  # 0x314 Vmix ADC Gain & Offset
-        msgid = f"0x{((0<<28)|(1<<27)|(0x314<<17)|(208<<9)|(29)):08X}"
+        node = int(self.apiBias.value())
+        msgid = f"0x{((0<<28)|(1<<27)|(0x314<<17)|(208<<9)|(node)):08X}"
         cmd="sendcan --msgid %s --data 0x0000000000000000\n" % msgid
         self.worker.send_command(cmd)
 
