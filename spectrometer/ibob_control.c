@@ -223,7 +223,7 @@ void do_initialize()
 
 
         //Accumulator Integration length MAX 39,999
-        message = "regwrite cfgspec/vacc/acc_len 39999\n";
+        message = "regwrite cfgspec/vacc/acc_len 24999\n";
         send(tcpsock, message, strlen(message), 0);
 
         //Integration period MAX 10239998
@@ -419,18 +419,19 @@ int send_data()
   outgoing.sdss.end_time[1] = end_time.tv_nsec;
 
   outgoing.sdss.error_bits = 0;
-  outgoing.sdss.int_time = 400000.; //40 msec * 10 = 400,000 usec
+  outgoing.sdss.int_time = 100000.; //40 msec * 10 = 400,000 usec
 
   // ENTER FAKE DATA
   int temp_var;
+  float inttime = 0.1;
   if (shm->fake==1){
     FILE *fd_fake = fopen(FAKE_CAL, "r");
     for(i=0;i<1024;i++){
        fscanf(fd_fake, "%d", &temp_var);
-       outgoing.data[i] = (uint64_t) 1.6 * (100000 * zero_factor * temp_var + 8000);
+       outgoing.data[i] = (uint64_t) (100000.0 * 0.25 * zero_factor * temp_var + 8000);
     }
     fclose(fd_fake);
-    usleep(400000);
+    usleep(100000);
     sock_write(client, (char *)&outgoing, sizeof(outgoing.sdss) + NPARTS * NPOINTS * sizeof(int));
     return 0;
   }
@@ -438,10 +439,10 @@ int send_data()
     FILE *fd_fake = fopen(FAKE_REF, "r");
     for(i=0;i<1024;i++){
        fscanf(fd_fake, "%d", &temp_var);
-       outgoing.data[i] = (uint64_t) 100000 * zero_factor * temp_var + 8000;
+       outgoing.data[i] = (uint64_t) (100000.0 * 0.25 * zero_factor * temp_var + 8000);
     }
     fclose(fd_fake);
-    usleep(400000);
+    usleep(100000);
     sock_write(client, (char *)&outgoing, sizeof(outgoing.sdss) + NPARTS * NPOINTS * sizeof(int));
     return 0;
   }
@@ -450,10 +451,10 @@ int send_data()
     k+=1;
     for(i=0;i<1024;i++){
        fscanf(fd_fake, "%d", &temp_var);
-       outgoing.data[i] = (uint64_t) 100000 * zero_factor * temp_var + 8000;
+       outgoing.data[i] = (uint64_t) (100000.0 * 0.25 * zero_factor * temp_var + 8000);
     }
     fclose(fd_fake);
-    usleep(400000);
+    usleep(100000);
     sock_write(client, (char *)&outgoing, sizeof(outgoing.sdss) + NPARTS * NPOINTS * sizeof(int));
     if(k==5) k=0;
     return 0;
@@ -462,7 +463,7 @@ int send_data()
 
   // IBOB SPECIFIC
   int packet;
-  int integration=10;
+  int integration=4;
   char label;
   unsigned char bram;     //8
   unsigned char nbram;    //8

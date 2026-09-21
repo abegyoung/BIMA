@@ -391,7 +391,7 @@ int setMonitor(int argc, char **argv, int fdout, int fderr)
   uint32_t canid;
   uint64_t candata;
 
-  canid = (uint32_t) (0<<28)|(1<<27)|(0x3FB<<17)|(208<<9)|(29);
+  canid = (uint32_t) (0<<28)|(1<<27)|(0x3FB<<17)|(208<<9)|(server.BIAS_API_NODE);
   candata = ((uint64_t)0xE11EA55AC300<<16)|((uint64_t)mask<<8)|((uint64_t)0);;
   writeCan(canid, candata);
 
@@ -414,7 +414,7 @@ int runSweep(int argc, char **argv, int fdout, int fderr)
   uint32_t canid;
   uint64_t candata;
 
-  canid = (uint32_t) (0<<28)|(1<<27)|(0x086<<17)|(208<<9)|(29);
+  canid = (uint32_t) (0<<28)|(1<<27)|(0x086<<17)|(208<<9)|(server.BIAS_API_NODE);
   candata = ((uint64_t)start<<48)|((uint64_t)stop<<32)|((uint64_t)step<<16)|((uint64_t)1<<8)|((uint64_t)power);
   writeCan(canid, candata);
 
@@ -426,7 +426,7 @@ int setFeedback(int argc, char **argv, int fdout, int fderr)
 {
   unsigned short mask = (unsigned short)strtol(argv[2], NULL, 10);
 
-  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x089<<17)|(208<<9)|(29);
+  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x089<<17)|(208<<9)|(server.BIAS_API_NODE);
   uint64_t candata = (uint64_t) mask<<56;
 
   writeCan(canid, candata);
@@ -437,7 +437,7 @@ int setFeedback(int argc, char **argv, int fdout, int fderr)
 
 int doVgap (int argc, char **argv, int fdout, int fderr)
 {
-  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x087<<17)|(208<<9)|(29);
+  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x087<<17)|(208<<9)|(server.BIAS_API_NODE);
   uint64_t candata = (uint64_t) 2<<56;
 
   writeCan(canid, candata);
@@ -451,7 +451,7 @@ int setBias(int argc, char **argv, int fdout, int fderr)
 
   unsigned short value = (unsigned short)strtol(argv[2], NULL, 10);
 
-  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x080<<17)|(208<<9)|(29);
+  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x080<<17)|(208<<9)|(server.BIAS_API_NODE);
   uint64_t candata = (uint64_t) value<<48;
 
   writeCan(canid, candata);
@@ -483,7 +483,7 @@ int setLNAdrain(int argc, char **argv, int fdout, int fderr)
 
   unsigned short value = (unsigned short)strtol(argv[2], NULL, 10);
 
-  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x083<<17)|(208<<9)|(29);
+  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x083<<17)|(208<<9)|(server.BIAS_API_NODE);
   uint64_t candata = ((uint64_t)1<<56)|((uint64_t)value<<40);
 
   writeCan(canid, candata);
@@ -497,7 +497,7 @@ int setLNAgate(int argc, char **argv, int fdout, int fderr)
 
   unsigned short value = (unsigned short)strtol(argv[2], NULL, 10);
 
-  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x085<<17)|(208<<9)|(29);
+  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x085<<17)|(208<<9)|(server.BIAS_API_NODE);
   uint64_t candata;
 
   candata = ((uint64_t)1<<56)|((uint64_t)value<<40);  //CAN DATA for Vg1
@@ -518,6 +518,16 @@ int setCanOut(int argc, char **argv, int fdout, int fderr)
   pthread_mutex_lock(&destination_lock);
   destination = fdout;
   pthread_mutex_unlock(&destination_lock);
+
+  return 0;
+}
+
+int setBIAS_API_NODE(int argc, char **argv, int fdout, int fderr)
+{
+  printf("bias api set from %d ", server.BIAS_API_NODE);
+  unsigned short value = (unsigned short)strtol(argv[2], NULL, 10);
+  server.BIAS_API_NODE = value;
+  printf("to %d\n", server.BIAS_API_NODE);
 
   return 0;
 }
