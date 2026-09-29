@@ -177,12 +177,10 @@ void *can_receiver_thread(void *arg) {
         case 0x0E3: {
           tellUser(fdout, "TTL0 " BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(frame.data[7]));
           tellUser(fdout, "TTL1 " BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(frame.data[6]));
-	  sprintf(buf, "W %2X 80", ((~frame.data[6] & 0x01)<<7));	//TTL1 bit 1 = X lock
-	  writeSock("SAMBUSD", buf);
-	  //log_server_msg( LOG_INFO, "Sock sent: %s", buf);
-	  sprintf(buf, "W %2X 100", ((~frame.data[6] & 0x02)<<7));	//TTL1 bit 2 = MM lock
-	  writeSock("SAMBUSD", buf);
-	  //log_server_msg( LOG_INFO, "Sock sent: %s", buf);
+	  sprintf(buf, "W %06X %06X", ((~frame.data[6] & 0x01)<<7), SAMBUS_RXL1);	//TTL1 bit 1 = X lock
+	  //writeSock("SAMBUSD", buf);
+	  sprintf(buf, "W %06X %06X", ((~frame.data[6] & 0x02)<<7), SAMBUS_RXL2);	//TTL1 bit 2 = MM lock
+	  //writeSock("SAMBUSD", buf);
 	  //tellUser(fdout, "SERVER %d %d %d %.3f %.3f", server.BandSelect, server.YIGHarmonicM, server.GunnHarmonicN, server.GunnFreq, server.L_Band);
 	  break;
         }
@@ -213,6 +211,11 @@ void *can_receiver_thread(void *arg) {
           tellUser(fdout, "VMON %.3f\n", (float) (int16_t)(frame.data[2]<<8|frame.data[3])/1000.);	//Vmon (SI)
           tellUser(fdout, "ISET %.3f\n", (float) (int16_t)(frame.data[4]<<8|frame.data[5])/10.);	//Iset (SI)
           tellUser(fdout, "IMON %.3f\n", (float) (int16_t)(frame.data[6]<<8|frame.data[7])/10.);	//Imon (SI)
+          pthread_mutex_lock(&_server_lock);
+	  _server.VSET = (int16_t)(frame.data[0]<<8|frame.data[1]);
+	  _server.VMON = (float) (int16_t)(frame.data[2]<<8|frame.data[3])/1000.;
+	  _server.IMON = (float) (int16_t)(frame.data[6]<<8|frame.data[7])/10.;
+          pthread_mutex_unlock(&_server_lock);
           break;
         }
         case 0x0E1: {
@@ -230,6 +233,10 @@ void *can_receiver_thread(void *arg) {
         case 0x0E4: {
           tellUser(fdout, "VD1 %.02f\n", (float)(uint16_t)(frame.data[0]<<8|frame.data[1])/1000.);	//Vd1 (UI)
           tellUser(fdout, "ID1 %.02f\n", (float)(uint16_t)(frame.data[2]<<8|frame.data[3])/1000.);	//Id1 (UI)
+
+          pthread_mutex_lock(&_server_lock);
+	  _server.LNAId = (float)(uint16_t)(frame.data[2]<<8|frame.data[3])/1000.;
+          pthread_mutex_unlock(&_server_lock);
           tellUser(fdout, "VG1 %.02f\n", (float) (int16_t)(frame.data[4]<<8|frame.data[5])/1000.);	//Vg1 (SI)
           break;
         }
@@ -255,6 +262,11 @@ void *can_receiver_thread(void *arg) {
         case 0x0E0: {
           u.b[0] = frame.data[3]; u.b[1] = frame.data[2]; u.b[2] = frame.data[1]; u.b[3] = frame.data[0];
           tellUser(fdout, "IFTOTPOW %.6f\n",u.f);
+
+          pthread_mutex_lock(&_server_lock);
+	  _server.IFTOTPOW = u.f;
+          pthread_mutex_unlock(&_server_lock);
+
           u.b[0] = frame.data[7]; u.b[1] = frame.data[6]; u.b[2] = frame.data[5]; u.b[3] = frame.data[4]; //PAMTEMP
           tellUser(fdout, "PAMTEMP %.1f\n", u.f); //PAMTEMP  (FL)
           break;
