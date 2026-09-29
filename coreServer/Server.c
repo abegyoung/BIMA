@@ -285,6 +285,9 @@ int manage_conn( int server_fd, const struct cmd *cmds )
 int destination;
 pthread_mutex_t destination_lock = PTHREAD_MUTEX_INITIALIZER;
 
+struct _SERVER _server;
+pthread_mutex_t _server_lock = PTHREAD_MUTEX_INITIALIZER;
+
 int main (int argc, char **argv)
 {
     char *p;

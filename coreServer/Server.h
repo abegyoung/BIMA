@@ -34,3 +34,24 @@ struct conn
 
 extern int destination;
 extern pthread_mutex_t destination_lock;
+
+extern struct _SERVER {
+  unsigned int BIAS_API_NODE;
+  unsigned int PAM_API_NODE;
+  unsigned int RCVR_API_NODE;
+  unsigned int BandSelect;
+  unsigned int YIGHarmonicN;
+  unsigned int GunnHarmonicM;
+  float L_Band;
+  float GunnFreq;
+  float LOFreq;
+  unsigned int calState;
+  float IFTOTPOW;
+  float LNAId;
+  int VSET;
+  float VMON;
+  float IMON;
+} _server;
+
+extern pthread_mutex_t _server_lock;
+
