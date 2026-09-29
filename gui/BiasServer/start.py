@@ -123,6 +123,7 @@ serverip = '192.168.0.51'
 numPoints = 25
 start = 0
 stop = 15000
+stripChartKey = "IFTOTPOW"
 
 def recv_end(the_socket, End):
     total_data=[];data=''
@@ -177,6 +178,11 @@ class Window(QMainWindow, form_class):
         self.blankingBias.toggled.connect(self.blankingBias_clicked)
         self.blankingPam.toggled.connect(self.blankingPam_clicked)
         self.blankingRcvr.toggled.connect(self.blankingRcvr_clicked)
+
+        # strip Chart Updates
+        self.stripChart.editingFinished.connect(self.updateStripChartKey)
+        self.chartMax.valueChanged.connect(self.update_ylim)
+        self.chartMin.valueChanged.connect(self.update_ylim)
 
 
         # Vmix ADCs
@@ -582,7 +588,7 @@ class Window(QMainWindow, form_class):
                     self.dac_layout.itemAt(i).widget().blockSignals(False)
 
 
-            key="IFTOTPOW"
+            key=stripChartKey
             if (key in status):
                 self.ydata_store = self.ydata_store[1:] + [np.genfromtxt(StringIO(status[key]))]
                 if self._plot_ref is None:
@@ -801,9 +807,17 @@ class Window(QMainWindow, form_class):
         self.worker.send_command(cmd)
 
 
+    def updateStripChartKey(self):
+        global stripChartKey
+        stripChartKey = str(self.stripChart.text())
 
+    def update_ylim(self):
+        ymin = self.chartMin.value()
+        ymax = self.chartMax.value()
 
-
+        if ymin < ymax:
+            self.mpl2.canvas.ax.set_ylim(ymin, ymax)
+            self.canvas.draw_idle()
 
     def btn_clicked(self):
         cmd="can\n"
