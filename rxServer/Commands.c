@@ -319,9 +319,9 @@ int setFreq(int argc, char **argv, int fdout, int fderr)
 
 int getIFtotalpower(int argc, char **argv, int fdout, int fderr)
 {
-  unsigned int avg = (unsigned short)strtod(argv[2], NULL);
+  //unsigned int avg = (unsigned short)strtod(argv[2], NULL);
 
-  tellUser(fdout, "IFTOTPOW %.6f\n", server.IFTOTPOW);
+  tellUser(fdout, "IFTOTPOW %.6f\n", _server.IFTOTPOW);
 
   return 0;
 }
@@ -395,7 +395,7 @@ int setMonitor(int argc, char **argv, int fdout, int fderr)
   candata = ((uint64_t)0xE11EA55AC300<<16)|((uint64_t)mask<<8)|((uint64_t)0);;
   writeCan(canid, candata);
 
-  canid = (uint32_t) (0<<28)|(1<<27)|(0x3FB<<17)|(224<9)|(0);
+  canid = (uint32_t) (0<<28)|(1<<27)|(0x3FB<<17)|(224<9)|(server.PAM_API_NODE);
   candata = ((uint64_t)0xE11EA55AC300<<16)|((uint64_t)mask<<8)|((uint64_t)0);;
   writeCan(canid, candata);
 
@@ -450,11 +450,17 @@ int setBias(int argc, char **argv, int fdout, int fderr)
 {
 
   unsigned short value = (unsigned short)strtol(argv[2], NULL, 10);
+  //If Bias needs updating
+  if(value != _server.VSET){
 
-  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x080<<17)|(208<<9)|(server.BIAS_API_NODE);
-  uint64_t candata = (uint64_t) value<<48;
+    uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x080<<17)|(208<<9)|(server.BIAS_API_NODE);
+    uint64_t candata = (uint64_t) value<<48;
 
-  writeCan(canid, candata);
+    writeCan(canid, candata);
+  }
+  //Otherwise do nothing
+  sleep(1);
+  tellUser(fdout, "Setting Vset %.2f Vmon %.2f Imon %.2f\n", (float)(value/1000.), _server.VMON, _server.IMON);
 
   return 0;
 
@@ -469,7 +475,7 @@ int setIF(int argc, char **argv, int fdout, int fderr)
   } u;
   u.f = (float)strtof(argv[2], NULL);
 
-  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x082<<17)|(224<<9)|(0);
+  uint32_t canid = (uint32_t) (0<<28)|(1<<27)|(0x082<<17)|(224<<9)|(server.PAM_API_NODE);
   uint64_t candata = (uint64_t) u.i<<32;
 
   writeCan(canid, candata);
@@ -487,6 +493,9 @@ int setLNAdrain(int argc, char **argv, int fdout, int fderr)
   uint64_t candata = ((uint64_t)1<<56)|((uint64_t)value<<40);
 
   writeCan(canid, candata);
+
+  sleep(1);
+  tellUser(fdout, "Setting LNA Drain %.2f %.2f\n", (float)(value/1000.), _server.LNAId);
 
   return 0;
 
@@ -528,6 +537,16 @@ int setBIAS_API_NODE(int argc, char **argv, int fdout, int fderr)
   unsigned short value = (unsigned short)strtol(argv[2], NULL, 10);
   server.BIAS_API_NODE = value;
   printf("to %d\n", server.BIAS_API_NODE);
+
+  return 0;
+}
+
+int setPAM_API_NODE(int argc, char **argv, int fdout, int fderr)
+{
+  printf("pam api set from %d ", server.PAM_API_NODE);
+  unsigned short value = (unsigned short)strtol(argv[2], NULL, 10);
+  server.PAM_API_NODE = value;
+  printf("to %d\n", server.PAM_API_NODE);
 
   return 0;
 }

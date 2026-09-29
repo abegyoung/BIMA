@@ -21,6 +21,7 @@ extern int sendStatus ( int, char **, int, int );
 extern int getIFtotalpower( int, char **, int, int );
 extern int doCal( int, char **, int, int );
 extern int setBIAS_API_NODE( int, char **, int, int );
+extern int setPAM_API_NODE( int, char **, int, int );
 
 
 
@@ -197,6 +198,14 @@ struct cmd commands[] =
   {
     "setBiasAPI", &setBIAS_API_NODE,
     "Set BIAS CAN NODE",
+    1,
+    {
+      { "node", CMDARR_ARGF_REQ | CMDARR_ARGF_NUM | CMDARR_ARGF_RANGE, 2, {"0","100"} },
+    },
+  },
+  {
+    "setPamAPI", &setPAM_API_NODE,
+    "Set Preamplifier CAN NODE",
     1,
     {
       { "node", CMDARR_ARGF_REQ | CMDARR_ARGF_NUM | CMDARR_ARGF_RANGE, 2, {"0","100"} },
