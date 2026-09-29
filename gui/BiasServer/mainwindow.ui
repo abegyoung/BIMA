@@ -33,7 +33,7 @@
      </size>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>3</number>
     </property>
     <widget class="QWidget" name="tab_1">
      <attribute name="title">
@@ -770,7 +770,7 @@ border-radius: 10px;</string>
         <x>540</x>
         <y>30</y>
         <width>121</width>
-        <height>212</height>
+        <height>228</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="dcdc_ctrl_layout">
@@ -844,7 +844,7 @@ border-radius: 10px;</string>
         <x>670</x>
         <y>30</y>
         <width>111</width>
-        <height>212</height>
+        <height>228</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="dcdc_input_layout">
@@ -912,7 +912,7 @@ border-radius: 10px;</string>
         <x>20</x>
         <y>30</y>
         <width>81</width>
-        <height>112</height>
+        <height>120</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="dac_layout">
@@ -1603,7 +1603,7 @@ border-radius: 10px;</string>
         <x>10</x>
         <y>290</y>
         <width>71</width>
-        <height>50</height>
+        <height>54</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="bandSelect_layout">
@@ -1654,7 +1654,7 @@ border-radius: 10px;</string>
         <x>500</x>
         <y>280</y>
         <width>81</width>
-        <height>81</height>
+        <height>83</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="harmonicSelectM_layout">
@@ -1696,7 +1696,7 @@ border-radius: 10px;</string>
         <x>420</x>
         <y>280</y>
         <width>81</width>
-        <height>51</height>
+        <height>54</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="harmonicSelectN_layout">
@@ -2863,6 +2863,19 @@ EEPROM</string>
        </rect>
       </property>
      </widget>
+     <widget class="QLineEdit" name="stripChart">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>113</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>IFTOTPOW</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -2872,7 +2885,7 @@ EEPROM</string>
      <x>0</x>
      <y>0</y>
      <width>787</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
