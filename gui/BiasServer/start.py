@@ -34,7 +34,7 @@ class SocketWorker(QObject):
     error = pyqtSignal(str)
     finished = pyqtSignal()
 
-    def __init__(self, host="127.0.0.1", port=9000):
+    def __init__(self, host="192.168.0.51", port=9000):
         super().__init__()
         self.host = host
         self.port = port
@@ -119,7 +119,7 @@ class SocketWorker(QObject):
 # ______________ GLOBALS ________________
 s=0
 sport = 9000
-serverip = '127.0.0.1'
+serverip = '192.168.0.51'
 numPoints = 25
 start = 0
 stop = 15000
@@ -173,6 +173,7 @@ class Window(QMainWindow, form_class):
         self.timer.toggled.connect(self.startButton_clicked)
 
         self.apiBias.valueChanged.connect(self.updateBIAS_API_NODE)
+        self.apiPam.valueChanged.connect(self.updatePAM_API_NODE)
         self.blankingBias.toggled.connect(self.blankingBias_clicked)
         self.blankingPam.toggled.connect(self.blankingPam_clicked)
         self.blankingRcvr.toggled.connect(self.blankingRcvr_clicked)
@@ -219,7 +220,11 @@ class Window(QMainWindow, form_class):
         # PLOT
         self.xdata_store = list(range(60))
         self.ydata_store = [int(0) for i in range(60)]
+
+        # Create the plot line once. Updating the line data later avoids
+        # ax.clear(), which would reset the axes properties.
         self._plot_ref = None
+        self._iv_line = None
 
         # PCA9502
         self.checkboxes = []
@@ -423,14 +428,29 @@ class Window(QMainWindow, form_class):
                     #PLOT array
 
                     xytp = self.data_store[key]
-                    self.mpl.canvas.ax.clear()
-                    self.mpl.canvas.ax.set_xlim(xmin=-2, xmax=15)
-                    self.mpl.canvas.ax.set_ylim(ymin=-2, ymax=150)
-                    self.mpl.canvas.ax.autoscale(enable='False')
-                    self.mpl.canvas.ax.get_xaxis().grid(True)
-                    self.mpl.canvas.ax.get_yaxis().grid(True)
-                    self.mpl.canvas.ax.plot(xytp[0:len(xytp)-1,0],xytp[0:len(xytp)-1,1], marker="None")
-                    self.mpl.canvas.draw()
+
+                    # Create the IV sweep line only once.
+                    if self._iv_line is None:
+                        self.mpl.canvas.ax.set_xlim(0, 20)
+                        self.mpl.canvas.ax.set_ylim(0, 270)
+                        self.mpl.canvas.ax.set_autoscale_on(False)
+                        self.mpl.canvas.ax.get_xaxis().grid(True)
+                        self.mpl.canvas.ax.get_yaxis().grid(True)
+
+                        self._iv_line, = self.mpl.canvas.ax.plot(
+                            xytp[0:len(xytp)-1, 0],
+                            xytp[0:len(xytp)-1, 1],
+                            marker="None"
+                        )
+                    else:
+                        # Update the existing Line2D object instead of
+                        # clearing and recreating the axes.
+                        self._iv_line.set_data(
+                            xytp[0:len(xytp)-1, 0],
+                            xytp[0:len(xytp)-1, 1]
+                        )
+
+                    self.mpl.canvas.draw_idle()
 
                     if self.saveIV.isChecked():
                         today=dt.date.today()
@@ -746,6 +766,11 @@ class Window(QMainWindow, form_class):
     def updateBIAS_API_NODE(self):
         node = int(self.apiBias.value())
         cmd="setBiasAPI --node %d\n" % node
+        self.worker.send_command(cmd)
+
+    def updatePAM_API_NODE(self):
+        node = int(self.apiPam.value())
+        cmd="setPamAPI --node %d\n" % node
         self.worker.send_command(cmd)
 
     def blankingBias_clicked(self, enabled):
